@@ -108,6 +108,9 @@ data3d.forEach(point => {
 });
 let layoutScale = maxCoordinate * scale * 2;
 
+// gallery pane
+let isMouseInsidePanel = false;
+
 function updateBuffer(){
     // update buffer
     old_data2d = JSON.parse(JSON.stringify(data2d));
@@ -144,6 +147,9 @@ document.addEventListener('mousemove', (event) => {
         cursorIn3D = true;
     }
 });
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
 document.addEventListener( 'mousemove', onMouseMove );
 document.addEventListener( 'mousedown', onRMBClick );
 document.addEventListener( 'mouseup', onRMBRelease );
@@ -568,10 +574,16 @@ function onRMBClick( event ) {
         updateBuffer();
         isMouseDown = true;
     }
+    else {
+        isMouseDown = false;
+    }
 }
 function onRMBRelease( event ) {
     if ( event.button === 2 ) {
         event.preventDefault();
+        isMouseDown = false;
+    }
+    else {
         isMouseDown = false;
     }
 }
@@ -590,7 +602,7 @@ function animate() {
             rollOverMesh3D.position.set(intersection3D[0].point.x, intersection3D[0].point.y, intersection3D[0].point.z)
             showTooltip(mouse_position, instanceId);
             // necessary: mouse3D position, datum
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh3D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -632,7 +644,7 @@ function animate() {
         const planeIntersection = new THREE.Vector3();
         if (raycaster2D.ray.intersectPlane(axesHelper2Dplane, planeIntersection)) {
             rollOverMesh2D.position.set(planeIntersection.x, planeIntersection.y, planeIntersection.z);
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh2D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -663,7 +675,7 @@ function animate() {
 
             rollOverMesh2D.position.set(intersection2D[0].point.x, intersection2D[0].point.y, intersection2D[0].point.z)
             showTooltip(mouse_position, instanceId);
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh2D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -889,4 +901,176 @@ function sendRequest(formData) {
 }
 });
 
+document.addEventListener("keydown", function(event) {
+    if (event.key === "q") {
+        const activeElement = document.activeElement;
+        if (activeElement === document.getElementById("textInput") || activeElement === document.getElementById("imageInput")) {
+          // Do nothing if the focus is on the text or file input fields
+          return;
+        }
+      const panel = document.getElementById("collapsible-panel");
+      const panelContent = document.getElementById("panel-content");
+      panelContent.innerHTML = ''; // Sets the HTML content of the panel
 
+      if (panel.style.height === "0px" || panel.style.height === "") {
+        panel.style.height = "400px"; // Adjust to your preferred height
+      } else {
+        panel.style.height = "0";
+      }
+    }
+  });
+
+  let hoveredIndices = []; // Store hovered indices
+
+document.addEventListener("keydown", function(event) {
+    const activeElement = document.activeElement;
+  
+    // If focused on an input field (text or image), allow typing 'q' and don't trigger the panel
+    if (activeElement === document.getElementById("textInput") || activeElement === document.getElementById("imageInput")) {
+      if (event.key === "q") {
+        // Allow typing 'q' in the input field, and do nothing else
+        return;
+      }
+    }
+  
+    // Handle the 'q' key press for opening the panel when focus is not on input fields
+    if (event.key === "q" && activeElement !== document.getElementById("textInput") && activeElement !== document.getElementById("imageInput")) {
+    //   event.preventDefault(); // Prevent the default action for the 'q' key
+  
+      hoveredIndices = [];  // Reset indices each time 'q' is pressed
+  
+      // Determine if we're in 3D or 2D context
+      if (cursorIn3D) {
+          // Add all points covered by the rollOverMesh3D
+          for (let i = 0; i < mesh3D.count; i++) {
+            const matrix = new THREE.Matrix4();
+            mesh3D.getMatrixAt(i, matrix);
+  
+            const position = new THREE.Vector3();
+            position.setFromMatrixPosition(matrix);
+  
+            // Check if the point is within the radius of the rollOverMesh
+            if (position.distanceTo(rollOverMesh3D.position) < rollOverMesh3D.scale.x) {
+              hoveredIndices.push(i); // Add index of the covered point
+            }
+        }
+      } else {
+        raycaster2D.setFromCamera(mouse, camera2D);
+          // Add all points covered by the rollOverMesh2D
+          for (let i = 0; i < mesh2D.count; i++) {
+            const matrix = new THREE.Matrix4();
+            mesh2D.getMatrixAt(i, matrix);
+  
+            const position = new THREE.Vector3();
+            position.setFromMatrixPosition(matrix);
+  
+            // Check if the point is within the radius of the rollOverMesh
+            if (position.distanceTo(rollOverMesh2D.position) < rollOverMesh2D.scale.x) {
+              hoveredIndices.push(i); // Add index of the covered point
+            }
+        }
+      }
+  
+      hoveredIndices.forEach((index) => {
+        // const objectName = data2d[index]["file_reference"].replace(".upload", "");  // You should define this function or have a list of object names.
+        const objectName = data2d[index].preview;
+        let color = new THREE.Color();
+
+        mesh2D.getColorAt(index, color);
+
+        loadMinioData(minioBucket, objectName)
+          .then((data) => {
+            if (data.type === 'image') {
+              let imgElement = document.createElement('img');
+              imgElement.src = data.content; // Base64-encoded image daqta
+              imgElement.style.margin = '5px';
+              imgElement.style.border = `5px solid #${color.getHexString()}`; // Add a red border/frame to the image
+              imgElement.style.borderRadius = '8px'; // Optional: rounded corners for the border
+            //   imgElement.style.boxShadow = '1px 1px 1px 1px';
+
+              imgElement.setAttribute('data-index', index);
+
+                // Add a contextmenu event listener to the image (right-click)
+              imgElement.addEventListener('contextmenu', (e) => {
+              e.preventDefault(); // Prevent the default right-click menu
+              const originalIndex = e.target.getAttribute('data-index'); // Get the index of the image
+              imgElement.style.border = `5px solid #${paintColor.toString(16)}`;
+                
+              console.log(paintColor.toString(16));
+              console.log(activeLabel);
+              console.log('Original Index:', originalIndex); // Log the index
+
+              const new_color = new THREE.Color()
+              mesh3D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
+              mesh2D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
+
+              data3d[originalIndex]['cluster_id'] = activeLabel;
+              data2d[originalIndex]['cluster_id'] = activeLabel;
+
+              mesh3D.instanceColor.needsUpdate = true;
+              mesh2D.instanceColor.needsUpdate = true;
+            });
+
+              const panelContent = document.getElementById('panel-content');
+              panelContent.appendChild(imgElement);
+            }
+          })
+          .catch((error) => {
+            console.error('Error loading MinIO data:', error);
+          });
+      });
+    }
+  });
+
+  // Resizing
+const panel = document.getElementById("collapsible-panel");
+const resizeHandle = document.getElementById("resize-handle");
+
+let isResizing = false;
+
+function startResizing(e) {
+  // Only start resizing on left-click (button 0)
+  if (e.button !== 0) return;
+
+  isResizing = true;
+  document.body.style.cursor = "ns-resize";
+
+  // Attach mousemove and mouseup listeners for resizing only
+  window.addEventListener("mousemove", resizePanel);
+  window.addEventListener("mouseup", stopResizing);
+}
+
+function resizePanel(e) {
+  if (!isResizing) return;
+
+  // Calculate the new height
+  const newHeight = window.innerHeight - e.clientY;
+  panel.style.height = `${newHeight}px`;
+}
+
+function stopResizing(e) {
+  isResizing = false;
+  document.body.style.cursor = "";
+
+  // Remove the listeners to prevent interference
+  window.removeEventListener("mousemove", resizePanel);
+  window.removeEventListener("mouseup", stopResizing);
+}
+
+// Prevent right-click from starting or interfering with resizing
+resizeHandle.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); // Prevent default context menu
+  stopResizing(); // Ensure resizing stops on right-click
+});
+
+// Start resizing only with a left-click on the resize handle
+resizeHandle.addEventListener("mousedown", startResizing);
+
+panel.addEventListener("mouseenter", () => {
+    isMouseInsidePanel = true;
+  });
+  
+  // Event listener for when the mouse leaves the panel
+  panel.addEventListener("mouseleave", () => {
+    isMouseInsidePanel = false;
+  });

@@ -130,7 +130,38 @@ body {
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
-    </style>
+
+/* Collapsible panel styles */
+#collapsible-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0px;
+  background-color: #c2c2c2;
+  overflow: hidden;
+  /* transition: height 0.3s ease; */
+  z-index: 9;
+  border-top: 2px solid #ccc;
+  resize: vertical;
+}
+
+#panel-content {
+  padding: 20px;
+  max-height: 100%; /* Ensures the content respects the panel's height */
+  overflow-y: auto; /* Adds vertical scrolling if content is too large */
+}
+
+/* Resize handle styles */
+#resize-handle {
+  height: 10px;
+  cursor: ns-resize;
+  background-color: #ccc;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+</style>
 
 
 </head>
@@ -151,6 +182,10 @@ body {
         </form>
     </div>
 
+    <div id="collapsible-panel">
+      <div id="resize-handle"></div>
+        <div id="panel-content"></div>
+    </div>
 
     <script>
         var data2d = {{ data2d }};
@@ -161,3 +196,4 @@ body {
 	<script defer src="{% static 'frontend/index.4369e802.js' %}"></script>
 </body>
 </html>
+
