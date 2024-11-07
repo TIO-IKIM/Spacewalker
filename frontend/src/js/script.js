@@ -86,7 +86,8 @@ let tooltip_template = document.createRange().createContextualFragment(`
       </div>
     </div>`);
 document.body.appendChild(tooltip_template);
-    
+
+document.body.style.overflow = 'hidden'; // Disable overflow to prevent scrolling
     
 let tooltip_state = { display: "none" }
 let $tooltip = document.querySelector('#tooltip');
@@ -110,6 +111,7 @@ let layoutScale = maxCoordinate * scale * 2;
 
 // gallery pane
 let isMouseInsidePanel = false;
+let menuHeight = 300;
 
 function updateBuffer(){
     // update buffer
@@ -153,6 +155,18 @@ document.addEventListener('contextmenu', (event) => {
 document.addEventListener( 'mousemove', onMouseMove );
 document.addEventListener( 'mousedown', onRMBClick );
 document.addEventListener( 'mouseup', onRMBRelease );
+
+document.getElementById('text2d').addEventListener('click', function() {
+    // Move slider to the far right (100% - slider's width to account for its size)
+    document.getElementById('slider').style.left = `calc(100% - ${0.5*document.getElementById('slider').offsetWidth}px)`;
+    sliderPos = window.innerWidth;
+});
+
+document.getElementById('text3d').addEventListener('click', function() {
+    // Move slider to the far right (100% - slider's width to account for its size)
+    document.getElementById('slider').style.left = `calc(0% - ${0.5*document.getElementById('slider').offsetWidth}px)`;
+    sliderPos = 0;
+});
 
 window.addEventListener('resize', function() {
 // Resize for 2D
@@ -451,7 +465,6 @@ function initRenderer() {
 // Slider
 function initSlider() {
     const slider = document.querySelector('#slider');
-    const text3D = document.querySelector('#text3d');
 
     /**
      * Event handler for the pointerdown event.
@@ -484,7 +497,7 @@ function initSlider() {
         if (e.isPrimary === false) return;
         sliderPos = Math.max(0, Math.min(window.innerWidth, e.pageX));
         slider.style.left = sliderPos - (slider.offsetWidth / 2) + 'px';
-        text3D.style.left = sliderPos + 80 + 'px';
+        // text3D.style.left = sliderPos + 80 + 'px';
     }
 
     slider.style.touchAction = 'none';
@@ -876,9 +889,6 @@ function sendRequest(formData) {
         scene2D.add(octahedron2d);
         scene3D.add(octahedron3d);
 
-        // set cameras
-        let frustum = new THREE.Frustum()
-        let frustum_matrix = new THREE.Matrix4().multiplyMatrices(camera2D.projectionMatrix, camera2D.matrixWorldInverse);
         //2D
         camera2D.position.set(queryPoint2d[0] * scale, camera2D.position.y, queryPoint2d[1] * scale);
         camera2D.lookAt(queryPoint2d[0] * scale, 0, queryPoint2d[1] * scale);
@@ -913,7 +923,7 @@ document.addEventListener("keydown", function(event) {
       panelContent.innerHTML = ''; // Sets the HTML content of the panel
 
       if (panel.style.height === "0px" || panel.style.height === "") {
-        panel.style.height = "400px"; // Adjust to your preferred height
+        panel.style.height = `${menuHeight}px`; // Adjust to your preferred height
       } else {
         panel.style.height = "0";
       }
@@ -1044,8 +1054,8 @@ function resizePanel(e) {
   if (!isResizing) return;
 
   // Calculate the new height
-  const newHeight = window.innerHeight - e.clientY;
-  panel.style.height = `${newHeight}px`;
+  menuHeight = window.innerHeight - e.clientY;
+  panel.style.height = `${menuHeight}px`;
 }
 
 function stopResizing(e) {
@@ -1074,3 +1084,7 @@ panel.addEventListener("mouseenter", () => {
   panel.addEventListener("mouseleave", () => {
     isMouseInsidePanel = false;
   });
+
+  document.getElementById('close-button').addEventListener('click', function() {
+    document.getElementById('collapsible-panel').style.height = '0';
+});
