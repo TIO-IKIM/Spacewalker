@@ -926,6 +926,7 @@ document.addEventListener("keydown", function(event) {
         panel.style.height = `${menuHeight}px`; // Adjust to your preferred height
       } else {
         panel.style.height = "0";
+        isMouseInsidePanel = false;
       }
     }
   });
@@ -1006,10 +1007,6 @@ document.addEventListener("keydown", function(event) {
               const originalIndex = e.target.getAttribute('data-index'); // Get the index of the image
               imgElement.style.border = `5px solid #${paintColor.toString(16)}`;
                 
-              console.log(paintColor.toString(16));
-              console.log(activeLabel);
-              console.log('Original Index:', originalIndex); // Log the index
-
               const new_color = new THREE.Color()
               mesh3D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
               mesh2D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
