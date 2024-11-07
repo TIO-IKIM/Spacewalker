@@ -933,9 +933,11 @@ document.addEventListener("keydown", function(event) {
 
       if (panel.style.height === "0px" || panel.style.height === "") {
         panel.style.height = `${menuHeight}px`; // Adjust to your preferred height
+        panel.style.paddingBottom = "50px";
       } else {
         panel.style.height = "0";
         isMouseInsidePanel = false;
+        panel.style.paddingBottom = "0px";
       }
     }
   });
@@ -1121,4 +1123,5 @@ panel.addEventListener("mouseenter", () => {
 
   document.getElementById('close-button').addEventListener('click', function() {
     document.getElementById('collapsible-panel').style.height = '0';
+    panel.style.paddingBottom = "50px";
 });
