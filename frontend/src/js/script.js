@@ -58,7 +58,7 @@ let axesHelper2Dplane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 let raycaster3D;
 let raycaster2D;
 const mouse = new THREE.Vector2( 1, 1 );
-let paintColor = 0x00ff00 //0xff00000;
+let paintColor = 0xffffff //0xff00000;
 let activeLabel = 0;
 let multiSelect = false;
 let cursorIn3D = false;
