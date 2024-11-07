@@ -380,10 +380,11 @@ function initCameras() {
         window.innerHeight / 2,
         window.innerHeight / - 2,
         1,
-        1000,
+        10000,
     );
     //camera2D.position.set(layoutScale, layoutScale, layoutScale);
-    camera2D.position.set(0, 20, 0);
+    camera2D.position.set(0, 10000, 0);
+    camera2D.zoom = 50;
     camera2D.lookAt(0, 0, 0 );
 
     camera3D = new THREE.PerspectiveCamera(
