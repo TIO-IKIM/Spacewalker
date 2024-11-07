@@ -1001,20 +1001,20 @@ document.addEventListener("keydown", function(event) {
         loadMinioData(minioBucket, objectName)
           .then((data) => {
             if (data.type === 'image') {
-              let imgElement = document.createElement('img');
-              imgElement.src = data.content; // Base64-encoded image daqta
-              imgElement.style.margin = '5px';
-              imgElement.style.border = `5px solid #${color.getHexString()}`; // Add a red border/frame to the image
-              imgElement.style.borderRadius = '8px'; // Optional: rounded corners for the border
+              let newElement = document.createElement('img');
+              newElement.src = data.content; // Base64-encoded image daqta
+              newElement.style.margin = '5px';
+              newElement.style.border = `5px solid #${color.getHexString()}`; // Add a red border/frame to the image
+              newElement.style.borderRadius = '8px'; // Optional: rounded corners for the border
             //   imgElement.style.boxShadow = '1px 1px 1px 1px';
 
-              imgElement.setAttribute('data-index', index);
+              newElement.setAttribute('data-index', index);
 
                 // Add a contextmenu event listener to the image (right-click)
-              imgElement.addEventListener('contextmenu', (e) => {
+              newElement.addEventListener('contextmenu', (e) => {
               e.preventDefault(); // Prevent the default right-click menu
               const originalIndex = e.target.getAttribute('data-index'); // Get the index of the image
-              imgElement.style.border = `5px solid #${paintColor.toString(16)}`;
+              newElement.style.border = `5px solid #${paintColor.toString(16)}`;
                 
               const new_color = new THREE.Color()
               mesh3D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
@@ -1026,11 +1026,39 @@ document.addEventListener("keydown", function(event) {
               mesh3D.instanceColor.needsUpdate = true;
               mesh2D.instanceColor.needsUpdate = true;
             });
-
               const panelContent = document.getElementById('panel-content');
-              panelContent.appendChild(imgElement);
+              panelContent.appendChild(newElement);
             }
-          })
+            else {
+                // For text data, use a <p> or <div> element
+                let newElement = document.createElement('p');
+                newElement.textContent = data.content; // Set text content
+                newElement.style.margin = '5px';
+                newElement.style.border = `5px solid #${color.getHexString()}`;
+                newElement.style.backgroundColor = '#ffffff'; // Light background color
+                newElement.style.borderRadius = '8px';
+                newElement.setAttribute('data-index', index);
+
+                // Add a contextmenu event listener to the text element (right-click)
+                newElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const originalIndex = e.target.getAttribute('data-index');
+                    newElement.style.border = `5px solid #${paintColor.toString(16)}`;
+
+                    const new_color = new THREE.Color();
+                    mesh3D.setColorAt(originalIndex, new_color.setHex(paintColor));
+                    mesh2D.setColorAt(originalIndex, new_color.setHex(paintColor));
+
+                    data3d[originalIndex]['cluster_id'] = activeLabel;
+                    data2d[originalIndex]['cluster_id'] = activeLabel;
+
+                    mesh3D.instanceColor.needsUpdate = true;
+                    mesh2D.instanceColor.needsUpdate = true;
+              });
+                const panelContent = document.getElementById('panel-content');
+                panelContent.appendChild(newElement);
+            }
+        })
           .catch((error) => {
             console.error('Error loading MinIO data:', error);
           });

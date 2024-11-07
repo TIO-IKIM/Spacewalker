@@ -38,6 +38,7 @@ MAX_PROCESSES = 10
 SAMPLE_N_FRAMES_VIDEO = 10
 IMAGENET_MEANS = np.array([0.485, 0.456, 0.406])
 IMAGENET_STDS = np.array([0.229, 0.224, 0.225])
+CSV_SEP = ','
 
 size_lut = {
     'vit': 1024,
@@ -366,7 +367,7 @@ class InferenceSettingsView(Connector, TemplateView):
                             object_name=master_file,
                             file_path=temporary_text.name
                         )
-                        df = pd.read_csv(temporary_text.name)
+                        df = pd.read_csv(temporary_text.name, sep=CSV_SEP)
                         for row in df.itertuples():
                             try:
                                 result = triton_inference_text(
@@ -602,7 +603,7 @@ class MinIOWebhook(Connector, TemplateView):
                 object_name=file,
                 file_path=temporary_table.name
             )
-            df = pd.read_csv(temporary_table.name)
+            df = pd.read_csv(temporary_table.name, sep=CSV_SEP)
             for row in df.itertuples():
                 with NamedTemporaryFile(mode='w+', suffix='.txt') as txt:
                     with open(txt.name, 'w') as txt_file:
