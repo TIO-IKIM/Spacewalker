@@ -290,6 +290,14 @@ function initClassSettingsGUI() {
     saveAnnotations.on("click", () => handleSaveAnnotationsClick());
 
     document.addEventListener('keydown', (event) => {
+    // Check if focus is inside a Tweakpane input field
+    const activeElement = document.activeElement;
+
+    // Ignore keydown event if an input or slider inside Tweakpane is focused
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.getAttribute('role') === 'slider')) {
+    return; // Exit the event listener if focused on a Tweakpane input
+    }
+
         const key = event.key;
         if (!isNaN(key) && key >= 0 && key <= 9) {
             const index = parseInt(key);
@@ -380,11 +388,11 @@ function initCameras() {
         window.innerHeight / 2,
         window.innerHeight / - 2,
         1,
-        10000,
+        1000,
     );
     //camera2D.position.set(layoutScale, layoutScale, layoutScale);
-    camera2D.position.set(0, 10000, 0);
-    camera2D.zoom = 50;
+    camera2D.position.set(0, 500, 0);
+    camera2D.zoom = 10;
     camera2D.lookAt(0, 0, 0 );
 
     camera3D = new THREE.PerspectiveCamera(
