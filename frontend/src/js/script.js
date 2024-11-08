@@ -1123,5 +1123,5 @@ panel.addEventListener("mouseenter", () => {
 
   document.getElementById('close-button').addEventListener('click', function() {
     document.getElementById('collapsible-panel').style.height = '0';
-    panel.style.paddingBottom = "50px";
+    panel.style.paddingBottom = "0px";
 });
