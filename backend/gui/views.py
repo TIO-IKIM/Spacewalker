@@ -47,6 +47,7 @@ size_lut = {
     'dinov2': 224,
     'clip_image': 224,
     'clip_video': 224,
+    'siglip2_image': 224,
 }
 triton_name_lut = {
     'vit': 'vit_b_onnx',
@@ -57,6 +58,8 @@ triton_name_lut = {
     'clip_image': 'CLIP_image',
     'clip_text': 'CLIP_text',
     'clip_video': 'CLIP_video',
+    'siglip2_image': 'SigLIP2_image',
+    'siglip2_text': 'SigLIP2_text',
 }
 
 
@@ -91,6 +94,10 @@ def prepare_image_for_inference(image: np.array, model: str):
 
         image = np.pad(image, pad_width=((a, aa), (b, bb), (0, 0)), mode='constant').astype(np.uint8)
 
+    # FIXME: Should make this more general for all HF models that use the AutoProcessor
+    if model.lower() == 'siglip2_image':
+        return np.moveaxis(image, [0, 1, 2], [1, 2, 0])
+
     # scaling
     image -= image.min(axis=(0, 1), keepdims=True)
     image = image.astype(np.float32)
@@ -99,7 +106,7 @@ def prepare_image_for_inference(image: np.array, model: str):
     # imagenet normalization
     image = (image - IMAGENET_MEANS) / IMAGENET_STDS
 
-    return np.moveaxis(image, [0, 1, 2], [1, 2, 0])
+    return np.moveaxis(image, [0, 1, 2], [1, 2, 0]).astype(np.float32)
 
 
 # Create your views here.
@@ -158,20 +165,18 @@ class guiView(Connector, TemplateView):
             project_name = request.POST['project']
 
             # FIXME: The model matching for text -> image and image -> text is hardcoded, if we get more models i should
-            # build a LUT
-            # this means an image query
             if len(request.FILES) != 0:
                 image = cv.imread(request.FILES['imageInput'].temporary_file_path())
                 # This likely means an image query in a text based project
                 if used_model not in size_lut:
-                    used_model = 'CLIP_image'
+                    used_model = 'CLIP_image' if 'clip' in used_model.lower() else 'SigLIP2_image'
                 image = prepare_image_for_inference(image, model=used_model)
-
-                embedding = triton_inference(image.astype(np.float32), model_name=triton_name_lut[used_model.lower()])
+                embedding = triton_inference(image, model_name=triton_name_lut[used_model.lower()])
             else:
                 # text query
                 text = request.POST['textInput']
-                embedding = triton_inference_text(text, model_name="CLIP_text")
+                used_model = 'CLIP_text' if 'clip' in used_model.lower() else 'SigLIP2_text'
+                embedding = triton_inference_text(text, model_name=used_model)
 
             # load the dr method
             with NamedTemporaryFile(mode='wb', suffix='.pkl') as dr_method:
@@ -330,7 +335,8 @@ class InferenceSettingsView(Connector, TemplateView):
                             image = prepare_image_for_inference(image, model.lower())
                             # images need to be padded to fit vit input shape
                             result = triton_inference(
-                                image_data=image.astype(np.float32),
+                                # image_data=image.astype(np.float32),
+                                image_data=image,
                                 model_name=triton_name_lut[model.lower()]
                             )
                             with NamedTemporaryFile(mode='w', suffix='.npy') as npy_temp:

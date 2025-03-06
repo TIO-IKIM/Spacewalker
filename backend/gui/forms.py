@@ -12,6 +12,8 @@ MODEL_CHOICES = [
     ('CLIP_image', 'CLIP_image'),
     ('CLIP_text', 'CLIP_text'),
     ('CLIP_video', 'CLIP_video'),
+    ('SigLIP2_image', 'SigLIP2_image'),
+    ('SigLIP2_text', 'SigLIP2_text'),
 ]
 DR_METHODS = [
     ('HNNE', 'HNNE'),
