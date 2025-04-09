@@ -12,6 +12,8 @@ MODEL_CHOICES = [
     ('CLIP_image', 'CLIP_image'),
     ('CLIP_text', 'CLIP_text'),
     ('CLIP_video', 'CLIP_video'),
+    ('SigLIP2_image', 'SigLIP2_image'),
+    ('SigLIP2_text', 'SigLIP2_text'),
 ]
 DR_METHODS = [
     ('HNNE', 'HNNE'),
@@ -19,6 +21,7 @@ DR_METHODS = [
     ('T-SNE', 'T-SNE'),
     ('MDS', 'MDS'),
     ('ISOMAP', 'ISOMAP'),
+    ('UMAP', 'UMAP'),
 ]
 MODALITIES = [
     ('image', 'Image'),
@@ -96,7 +99,6 @@ class ConfigurationForm(forms.Form):
             extension = file.name.split('.')[-1]
             if f'.{extension}' not in allowed_extensions[modality]:
                 raise ValidationError(f'Unsupported file extension for {modality}: .{extension}')
-
         return files
 
 
@@ -122,4 +124,10 @@ class InferenceSettingsForm(forms.Form):
         choices=DR_METHODS,
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='Dimensionality reduction method'
+    )
+
+    dr_only = forms.BooleanField(
+        widget=forms.CheckboxInput(attrs={'class': 'form-control'}),
+        label='Fit dimensionality reduction method for existing project',
+        required=False
     )

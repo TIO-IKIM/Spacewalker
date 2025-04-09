@@ -58,7 +58,7 @@ let axesHelper2Dplane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 let raycaster3D;
 let raycaster2D;
 const mouse = new THREE.Vector2( 1, 1 );
-let paintColor = 0x00ff00 //0xff00000;
+let paintColor = 0xffffff //0xff00000;
 let activeLabel = 0;
 let multiSelect = false;
 let cursorIn3D = false;
@@ -86,7 +86,8 @@ let tooltip_template = document.createRange().createContextualFragment(`
       </div>
     </div>`);
 document.body.appendChild(tooltip_template);
-    
+
+document.body.style.overflow = 'hidden'; // Disable overflow to prevent scrolling
     
 let tooltip_state = { display: "none" }
 let $tooltip = document.querySelector('#tooltip');
@@ -107,6 +108,10 @@ data3d.forEach(point => {
     maxCoordinate = Math.max(maxCoordinate, Math.abs(point.x), Math.abs(point.y), Math.abs(point.z));
 });
 let layoutScale = maxCoordinate * scale * 2;
+
+// gallery pane
+let isMouseInsidePanel = false;
+let menuHeight = 300;
 
 function updateBuffer(){
     // update buffer
@@ -144,9 +149,24 @@ document.addEventListener('mousemove', (event) => {
         cursorIn3D = true;
     }
 });
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
 document.addEventListener( 'mousemove', onMouseMove );
 document.addEventListener( 'mousedown', onRMBClick );
 document.addEventListener( 'mouseup', onRMBRelease );
+
+document.getElementById('text2d').addEventListener('click', function() {
+    // Move slider to the far right (100% - slider's width to account for its size)
+    document.getElementById('slider').style.left = `calc(100% - ${0.5*document.getElementById('slider').offsetWidth}px)`;
+    sliderPos = window.innerWidth;
+});
+
+document.getElementById('text3d').addEventListener('click', function() {
+    // Move slider to the far right (100% - slider's width to account for its size)
+    document.getElementById('slider').style.left = `calc(0% - ${0.5*document.getElementById('slider').offsetWidth}px)`;
+    sliderPos = 0;
+});
 
 window.addEventListener('resize', function() {
 // Resize for 2D
@@ -270,6 +290,14 @@ function initClassSettingsGUI() {
     saveAnnotations.on("click", () => handleSaveAnnotationsClick());
 
     document.addEventListener('keydown', (event) => {
+    // Check if focus is inside a Tweakpane input field
+    const activeElement = document.activeElement;
+
+    // Ignore keydown event if an input or slider inside Tweakpane is focused
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.getAttribute('role') === 'slider')) {
+    return; // Exit the event listener if focused on a Tweakpane input
+    }
+
         const key = event.key;
         if (!isNaN(key) && key >= 0 && key <= 9) {
             const index = parseInt(key);
@@ -363,7 +391,8 @@ function initCameras() {
         1000,
     );
     //camera2D.position.set(layoutScale, layoutScale, layoutScale);
-    camera2D.position.set(0, 20, 0);
+    camera2D.position.set(0, 500, 0);
+    camera2D.zoom = 10;
     camera2D.lookAt(0, 0, 0 );
 
     camera3D = new THREE.PerspectiveCamera(
@@ -445,7 +474,6 @@ function initRenderer() {
 // Slider
 function initSlider() {
     const slider = document.querySelector('#slider');
-    const text3D = document.querySelector('#text3d');
 
     /**
      * Event handler for the pointerdown event.
@@ -478,7 +506,7 @@ function initSlider() {
         if (e.isPrimary === false) return;
         sliderPos = Math.max(0, Math.min(window.innerWidth, e.pageX));
         slider.style.left = sliderPos - (slider.offsetWidth / 2) + 'px';
-        text3D.style.left = sliderPos + 80 + 'px';
+        // text3D.style.left = sliderPos + 80 + 'px';
     }
 
     slider.style.touchAction = 'none';
@@ -568,10 +596,16 @@ function onRMBClick( event ) {
         updateBuffer();
         isMouseDown = true;
     }
+    else {
+        isMouseDown = false;
+    }
 }
 function onRMBRelease( event ) {
     if ( event.button === 2 ) {
         event.preventDefault();
+        isMouseDown = false;
+    }
+    else {
         isMouseDown = false;
     }
 }
@@ -590,7 +624,7 @@ function animate() {
             rollOverMesh3D.position.set(intersection3D[0].point.x, intersection3D[0].point.y, intersection3D[0].point.z)
             showTooltip(mouse_position, instanceId);
             // necessary: mouse3D position, datum
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh3D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -632,7 +666,7 @@ function animate() {
         const planeIntersection = new THREE.Vector3();
         if (raycaster2D.ray.intersectPlane(axesHelper2Dplane, planeIntersection)) {
             rollOverMesh2D.position.set(planeIntersection.x, planeIntersection.y, planeIntersection.z);
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh2D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -663,7 +697,7 @@ function animate() {
 
             rollOverMesh2D.position.set(intersection2D[0].point.x, intersection2D[0].point.y, intersection2D[0].point.z)
             showTooltip(mouse_position, instanceId);
-            if (isMouseDown){
+            if (isMouseDown && !isMouseInsidePanel){
                 if (multiSelect){
                 for (let i = 0; i < mesh2D.count; i++) {
                     const matrix = new THREE.Matrix4();
@@ -864,9 +898,6 @@ function sendRequest(formData) {
         scene2D.add(octahedron2d);
         scene3D.add(octahedron3d);
 
-        // set cameras
-        let frustum = new THREE.Frustum()
-        let frustum_matrix = new THREE.Matrix4().multiplyMatrices(camera2D.projectionMatrix, camera2D.matrixWorldInverse);
         //2D
         camera2D.position.set(queryPoint2d[0] * scale, camera2D.position.y, queryPoint2d[1] * scale);
         camera2D.lookAt(queryPoint2d[0] * scale, 0, queryPoint2d[1] * scale);
@@ -887,4 +918,210 @@ function sendRequest(formData) {
         // Handle error
     });
 }
+});
+
+document.addEventListener("keydown", function(event) {
+    if (event.key === "q") {
+        const activeElement = document.activeElement;
+        if (activeElement === document.getElementById("textInput") || activeElement === document.getElementById("imageInput")) {
+          // Do nothing if the focus is on the text or file input fields
+          return;
+        }
+      const panel = document.getElementById("collapsible-panel");
+      const panelContent = document.getElementById("panel-content");
+      panelContent.innerHTML = ''; // Sets the HTML content of the panel
+
+      if (panel.style.height === "0px" || panel.style.height === "") {
+        panel.style.height = `${menuHeight}px`; // Adjust to your preferred height
+        panel.style.paddingBottom = "50px";
+      } else {
+        panel.style.height = "0";
+        isMouseInsidePanel = false;
+        panel.style.paddingBottom = "0px";
+      }
+    }
+  });
+
+  let hoveredIndices = []; // Store hovered indices
+
+document.addEventListener("keydown", function(event) {
+    const activeElement = document.activeElement;
+  
+    // If focused on an input field (text or image), allow typing 'q' and don't trigger the panel
+    if (activeElement === document.getElementById("textInput") || activeElement === document.getElementById("imageInput")) {
+      if (event.key === "q") {
+        // Allow typing 'q' in the input field, and do nothing else
+        return;
+      }
+    }
+  
+    // Handle the 'q' key press for opening the panel when focus is not on input fields
+    if (event.key === "q" && activeElement !== document.getElementById("textInput") && activeElement !== document.getElementById("imageInput")) {
+    //   event.preventDefault(); // Prevent the default action for the 'q' key
+  
+      hoveredIndices = [];  // Reset indices each time 'q' is pressed
+  
+      // Determine if we're in 3D or 2D context
+      if (cursorIn3D) {
+          // Add all points covered by the rollOverMesh3D
+          for (let i = 0; i < mesh3D.count; i++) {
+            const matrix = new THREE.Matrix4();
+            mesh3D.getMatrixAt(i, matrix);
+  
+            const position = new THREE.Vector3();
+            position.setFromMatrixPosition(matrix);
+  
+            // Check if the point is within the radius of the rollOverMesh
+            if (position.distanceTo(rollOverMesh3D.position) < rollOverMesh3D.scale.x) {
+              hoveredIndices.push(i); // Add index of the covered point
+            }
+        }
+      } else {
+        raycaster2D.setFromCamera(mouse, camera2D);
+          // Add all points covered by the rollOverMesh2D
+          for (let i = 0; i < mesh2D.count; i++) {
+            const matrix = new THREE.Matrix4();
+            mesh2D.getMatrixAt(i, matrix);
+  
+            const position = new THREE.Vector3();
+            position.setFromMatrixPosition(matrix);
+  
+            // Check if the point is within the radius of the rollOverMesh
+            if (position.distanceTo(rollOverMesh2D.position) < rollOverMesh2D.scale.x) {
+              hoveredIndices.push(i); // Add index of the covered point
+            }
+        }
+      }
+  
+      hoveredIndices.forEach((index) => {
+        // const objectName = data2d[index]["file_reference"].replace(".upload", "");  // You should define this function or have a list of object names.
+        const objectName = data2d[index].preview;
+        let color = new THREE.Color();
+
+        mesh2D.getColorAt(index, color);
+
+        loadMinioData(minioBucket, objectName)
+          .then((data) => {
+            if (data.type === 'image') {
+              let newElement = document.createElement('img');
+              newElement.src = data.content; // Base64-encoded image daqta
+              newElement.style.margin = '5px';
+              newElement.style.border = `5px solid #${color.getHexString()}`; // Add a red border/frame to the image
+              newElement.style.borderRadius = '8px'; // Optional: rounded corners for the border
+            //   imgElement.style.boxShadow = '1px 1px 1px 1px';
+
+              newElement.setAttribute('data-index', index);
+
+                // Add a contextmenu event listener to the image (right-click)
+              newElement.addEventListener('contextmenu', (e) => {
+              e.preventDefault(); // Prevent the default right-click menu
+              const originalIndex = e.target.getAttribute('data-index'); // Get the index of the image
+              newElement.style.border = `5px solid #${paintColor.toString(16)}`;
+                
+              const new_color = new THREE.Color()
+              mesh3D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
+              mesh2D.setColorAt( originalIndex, new_color.setHex( paintColor ) );
+
+              data3d[originalIndex]['cluster_id'] = activeLabel;
+              data2d[originalIndex]['cluster_id'] = activeLabel;
+
+              mesh3D.instanceColor.needsUpdate = true;
+              mesh2D.instanceColor.needsUpdate = true;
+            });
+              const panelContent = document.getElementById('panel-content');
+              panelContent.appendChild(newElement);
+            }
+            else {
+                // For text data, use a <p> or <div> element
+                let newElement = document.createElement('p');
+                newElement.textContent = data.content; // Set text content
+                newElement.style.margin = '5px';
+                newElement.style.border = `5px solid #${color.getHexString()}`;
+                newElement.style.backgroundColor = '#ffffff'; // Light background color
+                newElement.style.borderRadius = '8px';
+                newElement.setAttribute('data-index', index);
+
+                // Add a contextmenu event listener to the text element (right-click)
+                newElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const originalIndex = e.target.getAttribute('data-index');
+                    newElement.style.border = `5px solid #${paintColor.toString(16)}`;
+
+                    const new_color = new THREE.Color();
+                    mesh3D.setColorAt(originalIndex, new_color.setHex(paintColor));
+                    mesh2D.setColorAt(originalIndex, new_color.setHex(paintColor));
+
+                    data3d[originalIndex]['cluster_id'] = activeLabel;
+                    data2d[originalIndex]['cluster_id'] = activeLabel;
+
+                    mesh3D.instanceColor.needsUpdate = true;
+                    mesh2D.instanceColor.needsUpdate = true;
+              });
+                const panelContent = document.getElementById('panel-content');
+                panelContent.appendChild(newElement);
+            }
+        })
+          .catch((error) => {
+            console.error('Error loading MinIO data:', error);
+          });
+      });
+    }
+  });
+
+  // Resizing
+const panel = document.getElementById("collapsible-panel");
+const resizeHandle = document.getElementById("resize-handle");
+
+let isResizing = false;
+
+function startResizing(e) {
+  // Only start resizing on left-click (button 0)
+  if (e.button !== 0) return;
+
+  isResizing = true;
+  document.body.style.cursor = "ns-resize";
+
+  // Attach mousemove and mouseup listeners for resizing only
+  window.addEventListener("mousemove", resizePanel);
+  window.addEventListener("mouseup", stopResizing);
+}
+
+function resizePanel(e) {
+  if (!isResizing) return;
+
+  // Calculate the new height
+  menuHeight = window.innerHeight - e.clientY;
+  panel.style.height = `${menuHeight}px`;
+}
+
+function stopResizing(e) {
+  isResizing = false;
+  document.body.style.cursor = "";
+
+  // Remove the listeners to prevent interference
+  window.removeEventListener("mousemove", resizePanel);
+  window.removeEventListener("mouseup", stopResizing);
+}
+
+// Prevent right-click from starting or interfering with resizing
+resizeHandle.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); // Prevent default context menu
+  stopResizing(); // Ensure resizing stops on right-click
+});
+
+// Start resizing only with a left-click on the resize handle
+resizeHandle.addEventListener("mousedown", startResizing);
+
+panel.addEventListener("mouseenter", () => {
+    isMouseInsidePanel = true;
+  });
+  
+  // Event listener for when the mouse leaves the panel
+  panel.addEventListener("mouseleave", () => {
+    isMouseInsidePanel = false;
+  });
+
+  document.getElementById('close-button').addEventListener('click', function() {
+    document.getElementById('collapsible-panel').style.height = '0';
+    panel.style.paddingBottom = "0px";
 });

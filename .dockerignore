@@ -1,0 +1,17 @@
+pg_data/
+node_modules
+.parcelrc
+/.parcel-cache/
+.idea
+frontend/.parcel-cache/
+frontend/node_modules/
+spacewalker/__pycache__
+__pycache__/
+*.pyc
+*.npy
+label-studio-data/
+/project_data/
+pg_data
+model_repository/
+/model_repository/
+__pycache__

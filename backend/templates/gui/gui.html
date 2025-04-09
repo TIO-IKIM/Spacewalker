@@ -112,7 +112,7 @@ button:hover {
   font-weight: bold;
   position: absolute;
   top: calc(50% + 40px);
-  left: calc(25% + 80px);
+  left: calc(5% + 80px);
   transform: translate(-50%, -50%);
   box-shadow: 0 2px 4px #0000001a;
 }
@@ -130,7 +130,62 @@ body {
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
-    </style>
+
+/* Collapsible panel styles */
+#collapsible-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0px;
+  background-color: #c2c2c2;
+  overflow: hidden;
+  /* transition: height 0.3s ease; */
+  z-index: 9;
+  border-top: 2px solid #ccc;
+  resize: vertical;
+  padding-bottom: 0px;
+}
+
+#panel-content {
+  padding: 20px;
+  max-height: 100%; /* Ensures the content respects the panel's height */
+  overflow-y: auto; /* Adds vertical scrolling if content is too large */
+}
+
+/* Resize handle styles */
+#resize-handle {
+  height: 15px;
+  cursor: ns-resize;
+  background-color: #ccc;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#close-button {
+  height: 100%;
+  width: 15px;
+  background-color: #ccc;
+  color: #333;
+  border: none;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#close-button:hover {
+  color: #000;
+}
+
+</style>
 
 
 </head>
@@ -138,19 +193,25 @@ body {
 <body>
     <div id="container">
         <div id="slider" class="noselect"></div>
-        <div id="text2d" class="noselect">2D</div>
-        <div id="text3d" class="noselect">3D</div>
+        <button id="text2d" class="noselect">2D</button>
+        <button id="text3d" class="noselect">3D</button>
     </div>
 
         <!-- New input box at the bottom of the screen -->
     <div id="inputBox">
         <form id="inputForm">
-            <input type="text" id="textInput" name="textInput" placeholder="Enter text here">
+            <input type="text" id="textInput" name="textInput" placeholder="Enter text here" class="noselect">
             <input type="file" id="imageInput" name="imageInput" accept="image/*">
-            <button type="submit">Submit</button>
+            <button type="submit" class="noselect">Submit</button>
         </form>
     </div>
 
+    <div id="collapsible-panel" class="noselect">
+      <div id="resize-handle" class="noselect">
+        <button id="close-button" class="noselect">×</button>
+      </div>
+        <div id="panel-content" class="noselect"></div>
+    </div>
 
     <script>
         var data2d = {{ data2d }};
@@ -161,3 +222,4 @@ body {
 	<script defer src="{% static 'frontend/index.4369e802.js' %}"></script>
 </body>
 </html>
+
