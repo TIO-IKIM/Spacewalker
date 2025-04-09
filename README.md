@@ -1,7 +1,7 @@
 # Spacewalker \[[arxiv](https://arxiv.org/abs/2409.16793)\]
 
 <p align="center">
-  <img src="docs/Spacewalker.png" alt="Spacewalker image" width="960"/>
+  <img src="docs/Spacewalker.png" alt="Spacewalker image" width="480"/>
 </p>
 
 ⚠️ **DO NOT** use this repository "as is" in production, do not use dummy credentials.
