@@ -1,11 +1,17 @@
 # Spacewalker \[[arxiv](https://arxiv.org/abs/2409.16793)\]
 
-![Spacewalker image](docs/Spacewalker.png)
+<p align="center">
+  <img src="docs/Spacewalker.png" alt="Spacewalker image" width="960"/>
+</p>
 
-[!WARNING]
-DO NOT use this repository "as is" in production, do not use dummy credentials.
+⚠️ **DO NOT** use this repository "as is" in production, do not use dummy credentials.
 
 ## Overview
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Spacewalker demo" width="960"/>
+</p>
+
 Spacewalker is a deep learning-based framework designed for interactive exploration and annotation of various data modalities, including images, text, and video. It leverages state-of-the-art models and dimensionality reduction methods to produce visualizations of the embedding space that users can explore interactively.
 
 ## Key Features
