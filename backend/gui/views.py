@@ -165,6 +165,7 @@ class guiView(Connector, TemplateView):
             project_name = request.POST['project']
 
             # FIXME: The model matching for text -> image and image -> text is hardcoded, if we get more models i should
+            # build a lut
             if len(request.FILES) != 0:
                 image = cv.imread(request.FILES['imageInput'].temporary_file_path())
                 # This likely means an image query in a text based project
